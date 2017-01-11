@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "target": "es5",
+    "experimentalDecorators": true,
+    "lib": ["es6", "es5"],
+    "skipLibCheck": true
+  },
+  "include": [
+    "node_modules/@types/node/index.d.ts",
+    "src/**/*.ts"
+  ]
+}
