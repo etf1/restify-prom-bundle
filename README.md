@@ -1,6 +1,6 @@
 # Restify middleware to export standard http prometheus metrics.
 
-[![Build Status](https://travis-ci.org/etf1/restify-prom-bundle.svg?branch=master)](https://travis-ci.org/etf1/restify-prom-bundle) 
+[![dependencies Status](https://david-dm.org/etf1/restify-prom-bundle/status.svg)](https://david-dm.org/etf1/restify-prom-bundle) [![Build Status](https://travis-ci.org/etf1/restify-prom-bundle.svg?branch=master)](https://travis-ci.org/etf1/restify-prom-bundle) [![codecov](https://codecov.io/gh/etf1/restify-prom-bundle/branch/master/graph/badge.svg)](https://codecov.io/gh/etf1/restify-prom-bundle) [![Known Vulnerabilities](https://snyk.io/test/github/etf1/restify-prom-bundle/badge.svg)](https://snyk.io/test/github/etf1/restify-prom-bundle)
 
 ## Usage
 
