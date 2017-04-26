@@ -88,6 +88,22 @@ describe('Restify paths types', () => {
     ).to.eventually.be.fulfilled;
   });
 
+  it('Options routes GET (/path)', () => {
+    return expect(
+        (new Promise<void>((resolve: Function) => { server.get({ url: '/path' }, okRoute); resolve(); }))
+            .then(() => RequestPromise.get(uri('/path')))
+            .then(() => testPathCounted('/path'))
+    ).to.eventually.be.fulfilled;
+  });
+
+  it('Options routes POST (/path)', () => {
+    return expect(
+        (new Promise<void>((resolve: Function) => { server.post({ url: '/path' }, okRoute); resolve(); }))
+            .then(() => RequestPromise.post(uri('/path')))
+            .then(() => testPathCounted('/path', 'POST'))
+    ).to.eventually.be.fulfilled;
+  });
+
   afterEach(() => {
     if (server) {
       server.close();
