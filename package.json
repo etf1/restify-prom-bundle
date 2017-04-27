@@ -1,6 +1,6 @@
 {
   "name": "restify-prom-bundle",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Restify prometheus middleware to expose HTTP metrics",
   "main": "./built/js/index.js",
   "types": "./built/definitions/index.d.ts",
