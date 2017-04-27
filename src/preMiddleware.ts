@@ -236,9 +236,13 @@ export const preMiddleware =
         let path: string = req.path();
 
         if (!routeFindError) {
-          path = (route.spec.path instanceof RegExp) ?
-            `RegExp(${route.spec.path})` :
-            route.spec.path.toString();
+          /* tslint:disable: no-any */
+          const routePath = route.spec.path || (<any>route).spec.url;
+          /* tslint:enable: no-any */
+
+          path = (routePath instanceof RegExp) ?
+            `RegExp(${routePath})` :
+              routePath.toString();
         }
         debug('Using path: %s', path);
         // If path is not excluded
