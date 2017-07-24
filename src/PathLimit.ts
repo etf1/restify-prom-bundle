@@ -1,11 +1,10 @@
-/**
- * Measured paths limitation handling.
- */
-
 import * as Debug from 'debug';
 
 const debug: Debug.IDebugger = Debug('restify-prom-bundle');
 
+/**
+ * Measured paths limitation handling.
+ */
 export class PathLimit {
 
   /**
@@ -26,7 +25,7 @@ export class PathLimit {
     }
     this.pathsLimit = maxPaths;
     this.pathsList = new Set<string>();
-  };
+  }
 
   /**
    * Tries to register an path.
@@ -44,5 +43,5 @@ export class PathLimit {
     }
     debug('Cannot register %s', path);
     return false;
-  };
+  }
 }
