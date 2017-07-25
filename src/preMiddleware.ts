@@ -36,10 +36,6 @@ export interface IPreMiddlewareConfig {
    */
   exclude?: string | string[] | RegExp | Function;
   /**
-   * Prom-client blacklist.
-   */
-  promBlacklist?: string[];
-  /**
    * How often (ms) should prom-client fire default probes.
    */
   promDefaultDelay?: number;
@@ -53,15 +49,14 @@ export interface IPreMiddlewareConfig {
  * Default configuration.
  */
 const defaultConfig: IPreMiddlewareConfig = {
-  route: '/metrics',
-  defaults: [
+  route           : '/metrics',
+  defaults        : [
     'status',
     'pathDuration',
     'pathCount',
   ],
-  maxPathsToCount: 100,
+  maxPathsToCount : 100,
   promDefaultDelay: 1000,
-  promBlacklist: [],
 };
 
 /**
@@ -83,10 +78,10 @@ let shouldMeasureExcludedCache: any;
 /**
  * Tells if a path should be measured (not excluded).
  */
-const shouldMeasure = (path: string, config: IPreMiddlewareConfig): boolean => {
+const shouldMeasure: Function = (path: string, config: IPreMiddlewareConfig): boolean => {
   let isExcluded: boolean = false;
 
-  if (config.exclude) {
+  if (config.exclude !== undefined) {
     debug('-> Should we measure %s (%o)?', path, config.exclude);
     debug('%o', shouldMeasureExcludedCache);
     if (shouldMeasureExcludedCache.hasOwnProperty(path)) {
@@ -115,7 +110,7 @@ const shouldMeasure = (path: string, config: IPreMiddlewareConfig): boolean => {
 /**
  * Checks if config object is valid and add default values.
  */
-const checkConfig = (userConfig?: IPreMiddlewareConfig): IPreMiddlewareConfig => {
+const checkConfig: Function = (userConfig?: IPreMiddlewareConfig): IPreMiddlewareConfig => {
   let config: IPreMiddlewareConfig;
 
   if ((typeof userConfig !== 'object') && (userConfig !== undefined)) {
@@ -124,11 +119,14 @@ const checkConfig = (userConfig?: IPreMiddlewareConfig): IPreMiddlewareConfig =>
   config = assign(
     {},
     defaultConfig,
-    userConfig || {}
+    userConfig || {},
   );
   if (
     (config.route !== false) &&
-    ((typeof config.route !== 'string') || !config.route)
+    (
+      (typeof config.route !== 'string') ||
+      config.route.length === 0
+    )
   ) {
     throw new TypeError('`route` option for restify-prom-bundle.middleware() must be a non empty string or false');
   }
@@ -136,7 +134,7 @@ const checkConfig = (userConfig?: IPreMiddlewareConfig): IPreMiddlewareConfig =>
     throw new TypeError('`defaults` option for restify-prom-bundle.middleware() must be an array');
   }
   if (typeof config.exclude === 'string') {
-    config.exclude = [ <string>config.exclude ];
+    config.exclude = [<string>config.exclude];
   }
   if (
     config.exclude && (
@@ -146,11 +144,8 @@ const checkConfig = (userConfig?: IPreMiddlewareConfig): IPreMiddlewareConfig =>
     )
   ) {
     throw new TypeError(
-      '`exclude` option for restify-prom-bundle.middleware() must be string | string[] | RegExp | Function'
+      '`exclude` option for restify-prom-bundle.middleware() must be string | string[] | RegExp | Function',
     );
-  }
-  if (!Array.isArray(config.promBlacklist)) {
-    throw new TypeError('`promBlacklist` option for restify-prom-bundle.middleware() must be an array');
   }
   if ((typeof config.promDefaultDelay !== 'number') || config.promDefaultDelay < 1000) {
     throw new TypeError('`promDefaultDelay` option for restify-prom-bundle.middleware() must be number >= 1000');
@@ -163,7 +158,7 @@ const checkConfig = (userConfig?: IPreMiddlewareConfig): IPreMiddlewareConfig =>
 /**
  * Initialize metrics.
  */
-const initMetrics = (config: IPreMiddlewareConfig): IBundleMetrics => {
+const initMetrics: Function = (config: IPreMiddlewareConfig): IBundleMetrics => {
   const metrics: IBundleMetrics = {};
 
   if (config.defaults.indexOf('status') !== -1) {
@@ -196,29 +191,33 @@ const initMetrics = (config: IPreMiddlewareConfig): IBundleMetrics => {
 /**
  * Create restify's pre-middleware.
  */
-export const preMiddleware =
-  (server: restify.Server, userConfig?: IPreMiddlewareConfig): restify.RequestHandler => {
+/* tslint:disable: max-func-body-length */
+export const preMiddleware: Function =
+  (server: restify.Server, userConfig?: IPreMiddlewareConfig): restify.RequestHandlerType => {
     let pathLimiter: PathLimit;
     let config: IPreMiddlewareConfig;
     let metrics: IBundleMetrics;
 
     debug('Initializing pre-middleware');
     shouldMeasureExcludedCache = {};
-    if ((typeof(server) !== 'object') || !server.router || !server.pre) {
+    if (
+      (typeof(server) !== 'object') ||
+      !(<any>server).router || //tslint:disable-line: no-any
+      !server.pre
+    ) {
       throw new TypeError(
-        'restify-prom-bundle.middleware() must take a restify server instance as first argument'
+        'restify-prom-bundle.middleware() must take a restify server instance as first argument',
       );
     }
     config = checkConfig(userConfig);
     debug(
-      'Blacklisting prom-client default metrics with %sms delay : %o',
-      config.promBlacklist,
-      config.promDefaultDelay
+      'Setting default metrics with %sms delay : %o',
+      config.promDefaultDelay,
     );
-    client.defaultMetrics(config.promBlacklist, config.promDefaultDelay);
+    client.collectDefaultMetrics({ interval: config.promDefaultDelay });
     pathLimiter = new PathLimit(config.maxPathsToCount);
     // We register the route on pre now to bypass router and avoid middlewares.
-    if (config.route) {
+    if ((typeof config.route === 'string') && (config.route.length > 0)) {
       server.pre(exposeRoute(config.route));
     }
     metrics = initMetrics(config);
@@ -231,65 +230,72 @@ export const preMiddleware =
         debugStartTime = process.hrtime();
         debug('Starting pre-middleware run, searching route for request');
       }
-      server.router.find(req, res, (routeFindError: Error, route: restify.Route): void => {
-        debug('Searching route result: %o', {error: routeFindError && routeFindError.message});
-        let path: string = req.path();
+      (<any>server).router.find(  //tslint:disable-line: no-any
+        req,
+        res,
+        (routeFindError: Error, route: restify.Route): void => {
+          debug(
+            'Searching route result: %o',
+            {error: routeFindError && routeFindError.message}, //tslint:disable-line: strict-boolean-expressions
+          );
+          let path: string = req.path();
 
-        if (!routeFindError) {
-          /* tslint:disable: no-any */
-          const routePath = route.spec.path || (<any>route).spec.url;
-          /* tslint:enable: no-any */
+          if (!routeFindError) {
+            /* tslint:disable: no-any */
+            const routePath: any = route.spec.path || (<any>route).spec.url;  //tslint:disable-line: no-any strict-boolean-expressions
+            /* tslint:enable: no-any */
 
-          path = (routePath instanceof RegExp) ?
-            `RegExp(${routePath})` :
+            path = (routePath instanceof RegExp) ?
+              `RegExp(${routePath})` :
               routePath.toString();
-        }
-        debug('Using path: %s', path);
-        // If path is not excluded
-        if (shouldMeasure(path, config)) {
-          // restify_status_codes if enabled
-          if (metrics.status) {
-            onFinished(res, (err2: Error, res2: restify.Response) => {
-              debug('Incrementing restify_status_codes %d', (res2.statusCode || 0));
-              metrics.status.inc({ status_code: (res2.statusCode || 0) });
-            });
           }
-          // restify_path_duration if enabled and restify-defined route
-          if (metrics.pathDuration && !routeFindError) {
-            debug('Starting timer for %s %s', req.method, path);
-            const timerEnd: Function = metrics.pathDuration.startTimer({
-              path,
-              method: req.method,
-            });
-            onFinished(res, (err2: Error, res2: restify.Response) => {
-              const labels: client.labelValues = {
-                status_code: (res2 && res2.statusCode) ? res2.statusCode : 0,
-              };
-              debug('End timer for %s %s', req.method, path);
-              timerEnd(labels);
-            });
-          }
-          // restify_path_count if enabled and url limit not reached
-          if (metrics.pathCount && pathLimiter.registerPath(path)) {
-            onFinished(res, (err2: Error, res2: restify.Response) => {
-              const labels: client.labelValues = {
+          debug('Using path: %s', path);
+          // If path is not excluded
+          if (shouldMeasure(path, config)) {
+            // restify_status_codes if enabled
+            if (metrics.status) {
+              onFinished(res, (err2: Error, res2: restify.Response) => {
+                debug('Incrementing restify_status_codes %d', (res2.statusCode || 0)); //tslint:disable-line: strict-boolean-expressions
+                metrics.status.inc({status_code: res2.statusCode});
+              });
+            }
+            // restify_path_duration if enabled and restify-defined route
+            if (metrics.pathDuration && routeFindError) {
+              debug('Starting timer for %s %s', req.method, path);
+              const timerEnd: Function = metrics.pathDuration.startTimer({
                 path,
                 method: req.method,
-                status_code: (res2 && res2.statusCode) ? res2.statusCode : 0,
-              };
-              debug('Incrementing restify_path_duration code %o', labels);
-              metrics.pathCount.inc(labels);
-            });
+              });
+              onFinished(res, (err2: Error, res2: restify.Response) => {
+                const labels: client.labelValues = {
+                  status_code: (res2 && res2.statusCode) ? res2.statusCode : 0,
+                };
+                debug('End timer for %s %s', req.method, path);
+                timerEnd(labels);
+              });
+            }
+            // restify_path_count if enabled and url limit not reached
+            if (metrics.pathCount && pathLimiter.registerPath(path)) {
+              onFinished(res, (err2: Error, res2: restify.Response) => {
+                const labels: client.labelValues = {
+                  path,
+                  method     : req.method,
+                  status_code: (res2 && res2.statusCode) ? res2.statusCode : 0,
+                };
+                debug('Incrementing restify_path_duration code %o', labels);
+                metrics.pathCount.inc(labels);
+              });
+            }
           }
-        }
-        if (debug.enabled) {
-          const result: [number, number] = process.hrtime(debugStartTime);
-          debug(
-            'Finished pre-middleware run, took %dms',
-            (result[0] * 1000) + Math.round(result[1] / 1000000)
-          );
-        }
-        next();
-      });
+          if (debug.enabled) {
+            const result: [number, number] = process.hrtime(debugStartTime);
+            debug(
+              'Finished pre-middleware run, took %dms',
+              (result[0] * 1000) + Math.round(result[1] / 1000000),
+            );
+          }
+          next();
+        });
     };
   };
+/* tslint:enable: max-func-body-length */

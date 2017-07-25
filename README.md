@@ -47,7 +47,6 @@ Options :
 | route              | `string`    | `'/metrics'` | Exposed route (as GET) for metrics. If `false` no route will be exposed. |
 | defaults           | `string[] ` | All metrics  | Name of default metrics (see table below) to add for each routes. |
 | exclude            | `string` <br/> `string[]`  <br/> `RegExp`  <br/> `Function` | `undefined` | URI(s), uri that match regular expression or uri that passed to function returns true that will be excluded from default metrics. |
-| promBlacklist      | `string[] ` | `undefined`  | `process`/`node` [default metrics](https://github.com/siimon/prom-client#default-metrics) to blacklist |
 | promDefaultDelay   | `number `   | 10000        | How often (ms) should prom-client fire default probes |
 | maxPathsToCount    | `number `   | 100          | How many paths at max should we measure calls on (restify_path_count), use 0 for unlimited (See [below](#paths-limitation). |
 

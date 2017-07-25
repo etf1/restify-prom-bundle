@@ -1,125 +1,119 @@
-var gulp = require('gulp');
-var clean = require('gulp-clean');
-var clone = require('gulp-clone');
-var istanbul = require('gulp-istanbul');
-var mocha = require('gulp-mocha');
-var sourcemaps = require('gulp-sourcemaps');
-var gsync = require('gulp-sync')(gulp);
-var tslint = require('gulp-tslint');
-var gutil = require('gulp-util');
-var ts = require('gulp-typescript');
+"use strict"
 
-var fs = require('fs');
-var merge = require('merge2');
-var path = require('path');
-var remapIstanbul = require('remap-istanbul/lib/gulpRemapIstanbul');
+const gulp = require('gulp');
+const clean = require('gulp-clean');
+const clone = require('gulp-clone');
+const istanbul = require('gulp-istanbul');
+const mocha = require('gulp-mocha');
+const sourcemaps = require('gulp-sourcemaps');
+const gsync = require('gulp-sync')(gulp);
+const gulpTslint = require('gulp-tslint');
+const ts = require('gulp-typescript');
+const gutil = require('gulp-util');
 
-var libTs = ts.createProject(
+const spawn = require('child_process').spawn;
+const fs = require('fs');
+const merge = require('merge2');
+const path = require('path');
+const tslint = require('tslint');
+const remapIstanbul = require('remap-istanbul/lib/gulpRemapIstanbul');
+
+const libTs = ts.createProject(
   'tsconfig.json',
   {
     declaration: true,
   }
 );
 
-var testTs = ts.createProject('tsconfig.json');
+const testTs = ts.createProject('tsconfig.json');
 
 /**
  * Clean built files.
  */
 gulp.task('clean:lib',
-  function() {
-    return gulp.src(
-      [
-        'built/*',
-        '!built/.gitkeep',
-      ],
-      { read: false }
-    )
-      .pipe(clean());
-  }
+  () => gulp.src(
+    [
+      'built/*',
+      '!built/.gitkeep',
+    ],
+    { read: false }
+  )
+    .pipe(clean())
 );
 
 gulp.task('clean:test',
-  function() {
-    return gulp.src(
-      [
-        'test/**/*.js',
-      ],
-      {read: false}
-    )
-      .pipe(clean());
-  }
+  () => gulp.src(
+    [
+      'test/**/*.js',
+    ],
+    { read: false }
+  )
+    .pipe(clean())
 );
 
 gulp.task('clean:coverage',
-  function() {
-    return gulp.src(
-      [
-        'coverage/*',
-      ],
-      { read: false }
-    )
-      .pipe(clean());
-  }
+  () => gulp.src(
+    [
+      'coverage/*',
+    ],
+    { read: false }
+  )
+    .pipe(clean())
 );
 
 /**
  * Run TSLint.
  */
-gulp.task('tslint',
-  function() {
-    return gulp.src('src/**/*.ts')
-      .pipe(
-        tslint({
-          formatter: 'verbose',
-          rulesDirectory: 'node_modules/tslint-microsoft-contrib',
-          configuration: require('./tslint.json'),
-        })
-      )
-      .pipe(tslint.report({
-        emitError: !!process.env.STRICT_LINT,
-      }));
-  }
-);
+gulp.task('tslint', () => {
+  const program = tslint.Linter.createProgram('./tsconfig.json');
+
+  return gulp.src('src/**/*.ts')
+    .pipe(
+      gulpTslint({
+        formatter: 'verbose',
+        program,
+      })
+    )
+    .pipe(gulpTslint.report({
+      emitError: !!process.env.STRICT_LINT,
+    }));
+});
 
 /**
  * Compile TS.
  */
 gulp.task('typescript:lib',
-  function() {
-    var tsResult = libTs.src()
-        .pipe(sourcemaps.init({
-          loadMaps: true,
-          identityMap: true,
-        }))
-        .pipe(libTs());
-    var clonedStream = tsResult.js.pipe(clone());
+  () => {
+    const tsResult = libTs.src()
+      .pipe(sourcemaps.init({
+        loadMaps: true,
+        identityMap: true,
+      }))
+      .pipe(libTs());
+    const clonedStream = tsResult.js.pipe(clone());
 
     return merge([
       tsResult.dts.pipe(gulp.dest('built/definitions')),
       tsResult.js.pipe(gulp.dest('built/js')),
       clonedStream.pipe(sourcemaps.write({
         includeContent: false,
-        mapSources: function(sourcePath) { return path.resolve(__dirname, 'src', sourcePath); },
+        mapSources: (sourcePath) => path.resolve(__dirname, 'src', sourcePath),
       })).pipe(gulp.dest('built/map'))
     ]);
-  }
-);
+  });
 
 gulp.task('typescript:test',
-  function() {
-    return gulp.src('test/**/*.ts')
-      .pipe(sourcemaps.init({
-        loadMaps: true,
-        identityMap: true,
-      }))
-      .pipe(testTs())
-      .pipe(sourcemaps.write({
-        includeContent: false,
-        mapSources: function (sourcePath) { return path.resolve(__dirname, 'test', sourcePath); },
-      }))
-      .pipe(gulp.dest('test'));
-  }
+  () => gulp.src('test/**/*.ts')
+    .pipe(sourcemaps.init({
+      loadMaps: true,
+      identityMap: true,
+    }))
+    .pipe(testTs())
+    .pipe(sourcemaps.write({
+      includeContent: false,
+      mapSources: (sourcePath) => path.resolve(__dirname, 'test', sourcePath),
+    }))
+    .pipe(gulp.dest('test'))
 );
 
 /**
@@ -139,20 +133,19 @@ gulp.task('test:workflow',
 
 
 gulp.task('test:prepare',
-  function() {
-    return gulp.src(['test/**/*.js', 'built/map/**/*.js'])
-      .pipe(istanbul())
-      .pipe(istanbul.hookRequire());
-  }
+  () => gulp.src(['test/**/*.js', 'built/map/**/*.js'])
+    .pipe(istanbul())
+    .pipe(istanbul.hookRequire())
 );
 
 gulp.task('test:mocha',
-  function() {
+  () => {
+    process.env.NODE_ENV = 'test';
     return gulp.src('test/**/*.js', {read: false})
       .pipe(mocha({reporter: 'spec'}))
       .pipe(istanbul.writeReports({
         dir: './coverage',
-        reporters: [ 'json' ],
+        reporters: ['json'],
         reportOpts: {
           json: {
             file: './coverage/coverage-unmapped.json',
@@ -163,45 +156,80 @@ gulp.task('test:mocha',
 );
 
 gulp.task('test:remap',
-  function() {
-    return gulp.src('./coverage/coverage-unmapped.json')
-      .pipe(remapIstanbul({
-        basePath: path.resolve(__dirname, 'src'),
-        exclude: /^test/,
-        reports: {
-          'json': './coverage/coverage.json',
-          'html': './coverage/html-report',
-          'text-summary': './coverage/summary',
-        }
-      }));
-  }
+  () => gulp.src('./coverage/coverage-unmapped.json')
+    .pipe(remapIstanbul({
+      basePath: path.resolve(__dirname, 'src'),
+      exclude: /^test/,
+      reports: {
+        'json': './coverage/coverage.json',
+        'html': './coverage/html-report',
+        'text-summary': './coverage/summary',
+      }
+    }))
 );
 
 gulp.task('test:showSummary',
-  function(done) {
-    var file = path.resolve(__dirname, 'coverage', 'summary');
-    fs.stat(file, function (err, stats) {
+  (done) => {
+    const file = path.resolve(__dirname, 'coverage', 'summary');
+    fs.stat(file, (err, stats) => {
       if (err || !stats.isFile()) {
         return done();
       }
-      fs.readFile(file, function (err, buffer) {
+      fs.readFile(file, (err, buffer) => {
         if (err) {
           return done(err);
         }
         gutil.log(buffer.toString('utf-8'));
         done();
       });
+    })
+  });
+
+
+/**
+ * (Re)Launch server.
+ */
+let nodeProcess;
+gulp.task(
+  'server',
+  ['tslint', 'typescript:lib'],
+  () => {
+    if (nodeProcess) {
+      gutil.log('REstarting server');
+      nodeProcess.kill();
+    }
+    nodeProcess = spawn(
+      process.execPath,
+      [
+        './built/js/index.js'
+      ],
+      {
+        stdio: 'inherit',
+      }
+    );
+    nodeProcess.on('close', code => {
+      if (code === 8) {
+        gutil.log(new Error('Error detected, waiting for changes...'));
+      }
     });
+    nodeProcess.on('error', (err) => gutil.log(err));
   }
 );
+
+process.on('exit', () => {
+  if (nodeProcess) {
+    nodeProcess.kill();
+  }
+});
 
 /**
  * Watch mode.
  */
-gulp.task('watch',
-  gsync.sync([['clean', 'tslint'], 'typescript:lib']),
+gulp.task(
+  'watch',
+  gsync.sync(['clean:lib', 'server']),
   function () {
-    gulp.watch(['src/**/*.ts'], ['typescript:lib', 'tslint']);
+    gulp.watch(['src/**/*.ts', 'definitions/**/*.d.ts'], ['server']);
   }
 );
 
