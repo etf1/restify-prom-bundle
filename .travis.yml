@@ -1,36 +1,22 @@
+language: node_js
+
 sudo: false
 
 cache: yarn
 
-language: node_js
-
-matrix:
-  include:
-    - os: linux
-      env:
-        - TESTED_NODE_VERSION="stable"
-    - os: linux
-      env:
-        - TESTED_NODE_VERSION=5
-    - os: linux
-      env:
-        - TESTED_NODE_VERSION=4
-    - os: linux
-      env:
-        - TESTED_NODE_VERSION=0.12
+node_js:
+  - "8"
+  - "6"
+  - "4"
 
 before_install:
-  - nvm install stable
-  - nvm install $TESTED_NODE_VERSION
-  - nvm use stable
-  - npm install -g yarn
+  - "npm install -g yarn"
 
 install:
-  - nvm use stable
   - yarn
-  - gulp build typescript:test
 
-script: "nvm use $TESTED_NODE_VERSION && if [ \"$TESTED_NODE_VERSION\" == \"0.12\" ]; then ./node_modules/.bin/mocha `find test -type f -name '*.js' | xargs`; else gulp test; fi"
+script:
+  - gulp build typescript:test
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
