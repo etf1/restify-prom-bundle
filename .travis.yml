@@ -14,9 +14,11 @@ before_install:
 
 install:
   - yarn
+  - gulp build typescript:test
 
 script:
-  - gulp build typescript:test
+  - gulp test:workflow
+
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
