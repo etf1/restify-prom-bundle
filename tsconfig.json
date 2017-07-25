@@ -6,6 +6,7 @@
     "preserveConstEnums": true,
     "sourceMap": true,
     "target": "es6",
+    "alwaysStrict": true,
     "experimentalDecorators": true,
     "lib": ["es6", "es5"],
     "skipLibCheck": true
