@@ -163,27 +163,27 @@ const initMetrics: Function = (config: IPreMiddlewareConfig): IBundleMetrics => 
 
   if (config.defaults.indexOf('status') !== -1) {
     debug('Init restify_status_codes status metrics');
-    metrics.status = new client.Counter(
-      'restify_status_codes',
-      'Number of response for each HTTP status code.',
-      ['status_code'],
-    );
+    metrics.status = new client.Counter({
+      name      : 'restify_status_codes',
+      help      : 'Number of response for each HTTP status code.',
+      labelNames: ['status_code'],
+    });
   }
   if (config.defaults.indexOf('pathDuration') !== -1) {
     debug('Init restify_path_duration status metrics');
-    metrics.pathDuration = new client.Histogram(
-      'restify_path_duration',
-      'Histogram of response time in seconds for each request path / status code',
-      ['path', 'status_code', 'method'],
-    );
+    metrics.pathDuration = new client.Histogram({
+      name      : 'restify_path_duration',
+      help      : 'Histogram of response time in seconds for each request path / status code',
+      labelNames: ['path', 'status_code', 'method'],
+    });
   }
   if (config.defaults.indexOf('pathCount') !== -1) {
     debug('Init restify_path_count status metrics');
-    metrics.pathCount = new client.Counter(
-      'restify_path_count',
-      'Number of calls to each path',
-      ['path', 'status_code', 'method'],
-    );
+    metrics.pathCount = new client.Counter({
+      name: 'restify_path_count',
+      help: 'Number of calls to each path',
+      labelNames: ['path', 'status_code', 'method'],
+    });
   }
   return metrics;
 };
@@ -214,7 +214,7 @@ export const preMiddleware: Function =
       'Setting default metrics with %sms delay : %o',
       config.promDefaultDelay,
     );
-    client.collectDefaultMetrics({ interval: config.promDefaultDelay });
+    client.collectDefaultMetrics({interval: config.promDefaultDelay});
     pathLimiter = new PathLimit(config.maxPathsToCount);
     // We register the route on pre now to bypass router and avoid middlewares.
     if ((typeof config.route === 'string') && (config.route.length > 0)) {
