@@ -1,6 +1,6 @@
 {
   "name": "restify-prom-bundle",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Restify prometheus middleware to expose HTTP metrics",
   "main": "./built/js/index.js",
   "types": "./built/definitions/index.d.ts",
@@ -60,9 +60,10 @@
   },
   "dependencies": {
     "debug": "^2.6.8",
+    "fast-deep-equal": "^1.0.0",
     "object-assign": "^4.1.1",
     "on-finished": "^2.3.0",
-    "prom-client": "^10.0.2"
+    "prom-client": "^11.0.0"
   },
   "peerDependencies": {
     "restify": "~5"
