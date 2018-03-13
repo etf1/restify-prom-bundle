@@ -260,7 +260,7 @@ export const preMiddleware: Function =
               });
             }
             // restify_path_duration if enabled and restify-defined route
-            if (metrics.pathDuration && routeFindError) {
+            if (metrics.pathDuration && !routeFindError) {
               debug('Starting timer for %s %s', req.method, path);
               const timerEnd: Function = metrics.pathDuration.startTimer({
                 path,
