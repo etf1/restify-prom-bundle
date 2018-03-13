@@ -56,7 +56,7 @@ const defaultConfig: IPreMiddlewareConfig = {
     'pathCount',
   ],
   maxPathsToCount : 100,
-  promDefaultDelay: 1000,
+  promDefaultDelay: 1000
 };
 
 /**
@@ -214,7 +214,7 @@ export const preMiddleware: Function =
       'Setting default metrics with %sms delay : %o',
       config.promDefaultDelay,
     );
-    client.collectDefaultMetrics({interval: config.promDefaultDelay});
+    client.collectDefaultMetrics({timeout: config.promDefaultDelay});
     pathLimiter = new PathLimit(config.maxPathsToCount);
     // We register the route on pre now to bypass router and avoid middlewares.
     if ((typeof config.route === 'string') && (config.route.length > 0)) {

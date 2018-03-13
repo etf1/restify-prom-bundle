@@ -21,7 +21,7 @@ const defaultConfig = {
         'pathCount',
     ],
     maxPathsToCount: 100,
-    promDefaultDelay: 1000,
+    promDefaultDelay: 1000
 };
 let shouldMeasureExcludedCache;
 const shouldMeasure = (path, config) => {
@@ -123,7 +123,7 @@ exports.preMiddleware = (server, userConfig) => {
     }
     config = checkConfig(userConfig);
     debug('Setting default metrics with %sms delay : %o', config.promDefaultDelay);
-    client.collectDefaultMetrics({ interval: config.promDefaultDelay });
+    client.collectDefaultMetrics({ timeout: config.promDefaultDelay });
     pathLimiter = new PathLimit_1.PathLimit(config.maxPathsToCount);
     if ((typeof config.route === 'string') && (config.route.length > 0)) {
         server.pre(exposeRoute_1.exposeRoute(config.route));
